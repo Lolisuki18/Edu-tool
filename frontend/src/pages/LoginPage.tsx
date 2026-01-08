@@ -1,8 +1,7 @@
 import { useState } from "react";
 import { useNavigate } from "react-router-dom";
-import { useAuth } from "@/contexts/AuthContext";
 import { Button, Input } from "@/components/common";
-import { useFormValidation } from "@/hooks";
+import { useAuth, useFormValidation } from "@/hooks";
 import { validators, showToast } from "@/utils";
 
 export function LoginPage() {

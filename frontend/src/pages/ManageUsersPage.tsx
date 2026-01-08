@@ -1,9 +1,9 @@
 import { useState } from "react";
-import { useAuth } from "@/contexts/AuthContext";
-import { useGroups } from "@/contexts/GroupContext";
+
 import { Button } from "@/components/common";
 import { showToast, validators } from "@/utils";
 import type { User, UserRole } from "@/types";
+import { useAuth, useGroups } from "@/hooks";
 
 export function ManageUsersPage() {
   const { user } = useAuth();
@@ -148,10 +148,10 @@ export function ManageUsersPage() {
     user?.role === "teacher"
       ? groups.filter((g) => g.teacherId === user.id)
       : user?.role === "leader"
-      ? groups.filter(
-          (g) => g.leaderId === user.id || g.teacherId === user.createdBy
-        )
-      : groups;
+        ? groups.filter(
+            (g) => g.leaderId === user.id || g.teacherId === user.createdBy
+          )
+        : groups;
 
   // Check if user needs to select a group
   const needsGroup = newUser.role === "leader" || newUser.role === "member";
@@ -166,8 +166,8 @@ export function ManageUsersPage() {
           {user?.role === "admin"
             ? "Quản lý tài khoản giảng viên"
             : user?.role === "teacher"
-            ? "Quản lý nhóm, tài khoản leader và thành viên"
-            : "Quản lý nhóm và tài khoản thành viên"}
+              ? "Quản lý nhóm, tài khoản leader và thành viên"
+              : "Quản lý nhóm và tài khoản thành viên"}
         </p>
       </div>
 
