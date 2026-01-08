@@ -75,6 +75,22 @@ export function ManageUsersPage() {
     return Object.keys(errors).length === 0;
   };
 
+  const resetUserForm = () => {
+    setNewUser({
+      name: "",
+      email: "",
+      password: "",
+      role: "member",
+      groupId: "",
+    });
+    setUserErrors({});
+  };
+
+  const resetGroupForm = () => {
+    setNewGroup({ name: "", description: "" });
+    setGroupErrors({});
+  };
+
   const handleCreateUser = async () => {
     if (!validateUser()) {
       showToast.error("Vui lòng kiểm tra lại thông tin");
@@ -214,7 +230,10 @@ export function ManageUsersPage() {
               </Button>
               <Button
                 variant="outline"
-                onClick={() => setIsCreatingGroup(false)}
+                onClick={() => {
+                  resetGroupForm();
+                  setIsCreatingGroup(false);
+                }}
               >
                 Hủy
               </Button>
@@ -335,7 +354,13 @@ export function ManageUsersPage() {
             </div>
             <div className="flex gap-2 mt-4">
               <Button onClick={handleCreateUser}>Tạo tài khoản</Button>
-              <Button variant="outline" onClick={() => setIsCreating(false)}>
+              <Button
+                variant="outline"
+                onClick={() => {
+                  resetUserForm();
+                  setIsCreating(false);
+                }}
+              >
                 Hủy
               </Button>
             </div>
