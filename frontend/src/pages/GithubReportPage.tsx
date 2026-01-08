@@ -1,5 +1,7 @@
 import { useState } from "react";
 import { Button } from "@/components/common";
+import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
+import { faXmark, faChartLine } from "@fortawesome/free-solid-svg-icons";
 
 export function GithubReportPage() {
   const [repoUrls, setRepoUrls] = useState<string[]>([""]);
@@ -68,10 +70,10 @@ export function GithubReportPage() {
                   {repoUrls.length > 1 && (
                     <button
                       onClick={() => handleRemoveRepo(index)}
-                      className="px-3 py-2 bg-red-100 text-red-600 rounded-lg hover:bg-red-200 transition-colors"
+                      className="px-3 py-2 bg-red-100 text-red-600 rounded-lg hover:bg-red-200 transition-colors flex items-center justify-center"
                       type="button"
                     >
-                      ✕
+                      <FontAwesomeIcon icon={faXmark} />
                     </button>
                   )}
                 </div>
@@ -138,8 +140,9 @@ export function GithubReportPage() {
       </div>
 
       <div className="bg-green-50 border border-green-200 rounded-lg p-4">
-        <h3 className="text-sm font-semibold text-green-900 mb-2">
-          📊 Báo cáo bao gồm
+        <h3 className="text-sm font-semibold text-green-900 mb-2 flex items-center gap-2">
+          <FontAwesomeIcon icon={faChartLine} />
+          Báo cáo bao gồm
         </h3>
         <ul className="text-sm text-green-800 space-y-1">
           <li>• Tổng số commits của từng thành viên</li>

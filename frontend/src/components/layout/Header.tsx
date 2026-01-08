@@ -1,5 +1,17 @@
 import { useAuth } from "@/contexts/AuthContext";
 import { useNavigate } from "react-router-dom";
+import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
+import {
+  faHome,
+  faClipboardList,
+  faChartBar,
+  faUsers,
+  faKey,
+  faChalkboardTeacher,
+  faCrown,
+  faUser,
+  type IconDefinition,
+} from "@fortawesome/free-solid-svg-icons";
 
 interface HeaderProps {
   className?: string;
@@ -15,13 +27,21 @@ export function Header({ className = "" }: HeaderProps) {
   };
 
   const getRoleBadge = (role: string) => {
-    const badges = {
-      admin: "🔑 Admin",
-      teacher: "👨‍🏫 Giảng viên",
-      leader: "👑 Leader",
-      member: "👤 Thành viên",
+    const badges: Record<string, { icon: IconDefinition; label: string }> = {
+      admin: { icon: faKey, label: "Admin" },
+      teacher: { icon: faChalkboardTeacher, label: "Giảng viên" },
+      leader: { icon: faCrown, label: "Leader" },
+      member: { icon: faUser, label: "Thành viên" },
     };
-    return badges[role as keyof typeof badges] || role;
+    const badge = badges[role];
+    return badge ? (
+      <>
+        <FontAwesomeIcon icon={badge.icon} className="mr-1" />
+        {badge.label}
+      </>
+    ) : (
+      role
+    );
   };
 
   return (
@@ -37,29 +57,33 @@ export function Header({ className = "" }: HeaderProps) {
           <nav className="flex items-center gap-6">
             <a
               href="/"
-              className="text-gray-600 hover:text-blue-600 font-medium transition-colors"
+              className="text-gray-600 hover:text-blue-600 font-medium transition-colors flex items-center gap-2"
             >
-              🏠 Trang chủ
+              <FontAwesomeIcon icon={faHome} />
+              Trang chủ
             </a>
             <a
               href="/jira-to-srs"
-              className="text-gray-600 hover:text-blue-600 font-medium transition-colors"
+              className="text-gray-600 hover:text-blue-600 font-medium transition-colors flex items-center gap-2"
             >
-              📝 Jira to SRS
+              <FontAwesomeIcon icon={faClipboardList} />
+              Jira to SRS
             </a>
             <a
               href="/github-report"
-              className="text-gray-600 hover:text-blue-600 font-medium transition-colors"
+              className="text-gray-600 hover:text-blue-600 font-medium transition-colors flex items-center gap-2"
             >
-              📊 Github Report
+              <FontAwesomeIcon icon={faChartBar} />
+              Github Report
             </a>
 
             {(user?.role === "admin" || user?.role === "teacher") && (
               <a
                 href="/manage-users"
-                className="text-gray-600 hover:text-blue-600 font-medium transition-colors"
+                className="text-gray-600 hover:text-blue-600 font-medium transition-colors flex items-center gap-2"
               >
-                👥 Quản lý user
+                <FontAwesomeIcon icon={faUsers} />
+                Quản lý user
               </a>
             )}
 

@@ -69,7 +69,7 @@ export function ManageUsersPage() {
       setNewGroup({ name: "", description: "" });
       setIsCreatingGroup(false);
       alert("Tạo nhóm thành công!");
-    } catch (error) {
+    } catch {
       alert("Có lỗi xảy ra khi tạo nhóm!");
     }
   };

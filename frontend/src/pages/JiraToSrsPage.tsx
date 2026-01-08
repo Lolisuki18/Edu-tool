@@ -1,5 +1,7 @@
 import { useState } from "react";
 import { Button } from "@/components/common";
+import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
+import { faClipboardList } from "@fortawesome/free-solid-svg-icons";
 
 export function JiraToSrsPage() {
   const [jiraUrl, setJiraUrl] = useState("");
@@ -84,8 +86,9 @@ export function JiraToSrsPage() {
       </div>
 
       <div className="bg-blue-50 border border-blue-200 rounded-lg p-4">
-        <h3 className="text-sm font-semibold text-blue-900 mb-2">
-          📝 Hướng dẫn
+        <h3 className="text-sm font-semibold text-blue-900 mb-2 flex items-center gap-2">
+          <FontAwesomeIcon icon={faClipboardList} />
+          Hướng dẫn
         </h3>
         <ul className="text-sm text-blue-800 space-y-1">
           <li>• Nhập URL của Jira instance của bạn</li>

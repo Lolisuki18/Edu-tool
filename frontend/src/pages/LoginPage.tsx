@@ -19,7 +19,7 @@ export function LoginPage() {
     try {
       await login(email, password);
       navigate("/");
-    } catch (err) {
+    } catch {
       setError("Email hoặc mật khẩu không đúng");
     } finally {
       setIsLoading(false);

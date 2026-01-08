@@ -1,4 +1,11 @@
 import { useAuth } from "@/contexts/AuthContext";
+import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
+import {
+  faUser,
+  faClipboardList,
+  faChartBar,
+  faUsers,
+} from "@fortawesome/free-solid-svg-icons";
 
 export function HomePage() {
   const { user } = useAuth();
@@ -21,7 +28,9 @@ export function HomePage() {
           href="/jira-to-srs"
           className="bg-white p-8 rounded-xl shadow-md hover:shadow-xl transition-shadow"
         >
-          <div className="text-5xl mb-4">📝</div>
+          <div className="mb-4 flex justify-center text-blue-500">
+            <FontAwesomeIcon icon={faClipboardList} className="w-16 h-16" />
+          </div>
           <h3 className="text-2xl font-semibold mb-3 text-gray-900">
             Jira to SRS
           </h3>
@@ -33,7 +42,9 @@ export function HomePage() {
           href="/github-report"
           className="bg-white p-8 rounded-xl shadow-md hover:shadow-xl transition-shadow"
         >
-          <div className="text-5xl mb-4">📊</div>
+          <div className="mb-4 flex justify-center text-green-500">
+            <FontAwesomeIcon icon={faChartBar} className="w-16 h-16" />
+          </div>
           <h3 className="text-2xl font-semibold mb-3 text-gray-900">
             Github Report
           </h3>
@@ -45,19 +56,23 @@ export function HomePage() {
           href="/profile"
           className="bg-white p-8 rounded-xl shadow-md hover:shadow-xl transition-shadow"
         >
-          <div className="text-5xl mb-4">👤</div>
+          <div className="mb-4 flex justify-center text-blue-500">
+            <FontAwesomeIcon icon={faUser} className="w-16 h-16" />
+          </div>
           <h3 className="text-2xl font-semibold mb-3 text-gray-900">Hồ sơ</h3>
           <p className="text-gray-600">
             Quản lý thông tin cá nhân và cài đặt API tokens
           </p>
         </a>
-        
+
         {(user?.role === "admin" || user?.role === "teacher") && (
           <a
             href="/manage-users"
             className="bg-gradient-to-br from-purple-50 to-pink-50 p-8 rounded-xl shadow-md hover:shadow-xl transition-shadow border-2 border-purple-200"
           >
-            <div className="text-5xl mb-4">👥</div>
+            <div className="mb-4 flex justify-center text-purple-500">
+              <FontAwesomeIcon icon={faUsers} className="w-16 h-16" />
+            </div>
             <h3 className="text-2xl font-semibold mb-3 text-gray-900">
               Quản lý User
             </h3>
