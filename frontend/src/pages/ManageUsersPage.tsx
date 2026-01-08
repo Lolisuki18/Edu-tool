@@ -111,12 +111,12 @@ export function ManageUsersPage() {
             {(user?.role === "teacher" || user?.role === "leader") && (
               <Button
                 variant="outline"
-                onClick={() => setIsCreatingGroup(true)}
+                onClick={() => setIsCreatingGroup(!isCreatingGroup)}
               >
                 + Tạo nhóm mới
               </Button>
             )}
-            <Button onClick={() => setIsCreating(true)}>
+            <Button onClick={() => setIsCreating(!isCreating)}>
               + Tạo tài khoản mới
             </Button>
           </div>
