@@ -1,5 +1,6 @@
 import { useState } from "react";
 import { Button } from "@/components/common";
+import { showToast, validators } from "@/utils";
 import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
 import { faClipboardList } from "@fortawesome/free-solid-svg-icons";
 
@@ -8,13 +9,38 @@ export function JiraToSrsPage() {
   const [apiToken, setApiToken] = useState("");
   const [projectKey, setProjectKey] = useState("");
   const [isLoading, setIsLoading] = useState(false);
+  const [errors, setErrors] = useState<{
+    jiraUrl?: string;
+    apiToken?: string;
+    projectKey?: string;
+  }>({});
+
+  const validateForm = (): boolean => {
+    const newErrors: typeof errors = {};
+
+    const urlError = validators.jiraUrl(jiraUrl);
+    if (urlError) newErrors.jiraUrl = urlError;
+
+    const tokenError = validators.token(apiToken, "API Token");
+    if (tokenError) newErrors.apiToken = tokenError;
+
+    const keyError = validators.projectKey(projectKey);
+    if (keyError) newErrors.projectKey = keyError;
+
+    setErrors(newErrors);
+    return Object.keys(newErrors).length === 0;
+  };
 
   const handleGenerate = async () => {
+    if (!validateForm()) {
+      showToast.error("Vui lòng kiểm tra lại thông tin");
+      return;
+    }
+
     setIsLoading(true);
-    // TODO: Implement Jira API integration
     setTimeout(() => {
       setIsLoading(false);
-      alert("SRS generation will be implemented soon!");
+      showToast.info("SRS generation will be implemented soon!");
     }, 1000);
   };
 
@@ -43,10 +69,19 @@ export function JiraToSrsPage() {
             <input
               type="text"
               value={jiraUrl}
-              onChange={(e) => setJiraUrl(e.target.value)}
+              onChange={(e) => {
+                setJiraUrl(e.target.value);
+                if (errors.jiraUrl)
+                  setErrors({ ...errors, jiraUrl: undefined });
+              }}
               placeholder="https://your-domain.atlassian.net"
-              className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+              className={`w-full px-4 py-2 border rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent ${
+                errors.jiraUrl ? "border-red-500" : "border-gray-300"
+              }`}
             />
+            {errors.jiraUrl && (
+              <p className="text-red-600 text-sm mt-1">{errors.jiraUrl}</p>
+            )}
           </div>
 
           <div>
@@ -56,10 +91,19 @@ export function JiraToSrsPage() {
             <input
               type="password"
               value={apiToken}
-              onChange={(e) => setApiToken(e.target.value)}
+              onChange={(e) => {
+                setApiToken(e.target.value);
+                if (errors.apiToken)
+                  setErrors({ ...errors, apiToken: undefined });
+              }}
               placeholder="Your Jira API token"
-              className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+              className={`w-full px-4 py-2 border rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent ${
+                errors.apiToken ? "border-red-500" : "border-gray-300"
+              }`}
             />
+            {errors.apiToken && (
+              <p className="text-red-600 text-sm mt-1">{errors.apiToken}</p>
+            )}
           </div>
 
           <div>
@@ -69,15 +113,24 @@ export function JiraToSrsPage() {
             <input
               type="text"
               value={projectKey}
-              onChange={(e) => setProjectKey(e.target.value)}
+              onChange={(e) => {
+                setProjectKey(e.target.value.toUpperCase());
+                if (errors.projectKey)
+                  setErrors({ ...errors, projectKey: undefined });
+              }}
               placeholder="PROJ"
-              className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+              className={`w-full px-4 py-2 border rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent ${
+                errors.projectKey ? "border-red-500" : "border-gray-300"
+              }`}
             />
+            {errors.projectKey && (
+              <p className="text-red-600 text-sm mt-1">{errors.projectKey}</p>
+            )}
           </div>
 
           <Button
             onClick={handleGenerate}
-            disabled={!jiraUrl || !apiToken || !projectKey || isLoading}
+            disabled={isLoading}
             className="w-full"
           >
             {isLoading ? "Đang tạo SRS..." : "Tạo tài liệu SRS"}

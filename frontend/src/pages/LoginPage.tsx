@@ -2,22 +2,41 @@ import { useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { useAuth } from "@/contexts/AuthContext";
 import { Button, Input } from "@/components/common";
+import { useFormValidation } from "@/hooks";
+import { validators, showToast } from "@/utils";
 
 export function LoginPage() {
-  const [email, setEmail] = useState("");
-  const [password, setPassword] = useState("");
   const [error, setError] = useState("");
   const [isLoading, setIsLoading] = useState(false);
   const navigate = useNavigate();
   const { login } = useAuth();
 
+  const { values, errors, handleChange, handleBlur, validateAll } =
+    useFormValidation(
+      {
+        email: "",
+        password: "",
+      },
+      {
+        email: validators.email,
+        password: (value) => validators.password(value, 1), // Min 1 char for demo
+      }
+    );
+
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setError("");
+
+    // Validate all fields
+    if (!validateAll()) {
+      showToast.error("Vui lòng kiểm tra lại thông tin");
+      return;
+    }
+
     setIsLoading(true);
 
     try {
-      await login(email, password);
+      await login(values.email, values.password);
       navigate("/");
     } catch {
       setError("Email hoặc mật khẩu không đúng");
@@ -39,8 +58,10 @@ export function LoginPage() {
             <Input
               label="Email"
               type="email"
-              value={email}
-              onChange={(e) => setEmail(e.target.value)}
+              value={values.email}
+              onChange={handleChange("email")}
+              onBlur={handleBlur("email")}
+              error={errors.email}
               placeholder="your@email.com"
               required
             />
@@ -48,8 +69,10 @@ export function LoginPage() {
             <Input
               label="Mật khẩu"
               type="password"
-              value={password}
-              onChange={(e) => setPassword(e.target.value)}
+              value={values.password}
+              onChange={handleChange("password")}
+              onBlur={handleBlur("password")}
+              error={errors.password}
               placeholder="••••••••"
               required
             />
