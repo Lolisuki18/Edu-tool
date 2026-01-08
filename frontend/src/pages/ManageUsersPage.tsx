@@ -1,8 +1,9 @@
 import { useState } from "react";
-import { useAuth } from "@/contexts/AuthContext";
-import { useGroups } from "@/contexts/GroupContext";
+
 import { Button } from "@/components/common";
+import { showToast, validators } from "@/utils";
 import type { User, UserRole } from "@/types";
+import { useAuth, useGroups } from "@/hooks";
 
 export function ManageUsersPage() {
   const { user } = useAuth();
@@ -21,6 +22,15 @@ export function ManageUsersPage() {
     name: "",
     description: "",
   });
+  const [userErrors, setUserErrors] = useState<{
+    name?: string;
+    email?: string;
+    password?: string;
+    groupId?: string;
+  }>({});
+  const [groupErrors, setGroupErrors] = useState<{
+    name?: string;
+  }>({});
 
   // Helper function to check if current user can create a specific role
   const canCreateRole = (role: UserRole): boolean => {
@@ -34,7 +44,59 @@ export function ManageUsersPage() {
   };
   console.log("Can create roles:", canCreateRole("member"));
 
+  const validateUser = (): boolean => {
+    const errors: typeof userErrors = {};
+
+    const nameError = validators.name(newUser.name);
+    if (nameError) errors.name = nameError;
+
+    const emailError = validators.email(newUser.email);
+    if (emailError) errors.email = emailError;
+
+    const passwordError = validators.password(newUser.password, 6);
+    if (passwordError) errors.password = passwordError;
+
+    const needsGroup = newUser.role === "leader" || newUser.role === "member";
+    if (needsGroup && !newUser.groupId) {
+      errors.groupId = "Vui lòng chọn nhóm";
+    }
+
+    setUserErrors(errors);
+    return Object.keys(errors).length === 0;
+  };
+
+  const validateGroup = (): boolean => {
+    const errors: typeof groupErrors = {};
+
+    const nameError = validators.groupName(newGroup.name);
+    if (nameError) errors.name = nameError;
+
+    setGroupErrors(errors);
+    return Object.keys(errors).length === 0;
+  };
+
+  const resetUserForm = () => {
+    setNewUser({
+      name: "",
+      email: "",
+      password: "",
+      role: "member",
+      groupId: "",
+    });
+    setUserErrors({});
+  };
+
+  const resetGroupForm = () => {
+    setNewGroup({ name: "", description: "" });
+    setGroupErrors({});
+  };
+
   const handleCreateUser = async () => {
+    if (!validateUser()) {
+      showToast.error("Vui lòng kiểm tra lại thông tin");
+      return;
+    }
+
     const mockUser: User = {
       id: `user-${Date.now()}`,
       ...newUser,
@@ -51,12 +113,18 @@ export function ManageUsersPage() {
       role: "member",
       groupId: "",
     });
+    setUserErrors({});
     setIsCreating(false);
-    alert("Tạo tài khoản thành công!");
+    showToast.success("Tạo tài khoản thành công!");
   };
 
   const handleCreateGroup = async () => {
-    if (!newGroup.name || !user) return;
+    if (!validateGroup()) {
+      showToast.error("Vui lòng kiểm tra lại thông tin");
+      return;
+    }
+
+    if (!user) return;
 
     try {
       await createGroup({
@@ -67,10 +135,11 @@ export function ManageUsersPage() {
         createdByRole: user.role === "teacher" ? "teacher" : "leader",
       });
       setNewGroup({ name: "", description: "" });
+      setGroupErrors({});
       setIsCreatingGroup(false);
-      alert("Tạo nhóm thành công!");
+      showToast.success("Tạo nhóm thành công!");
     } catch {
-      alert("Có lỗi xảy ra khi tạo nhóm!");
+      showToast.error("Có lỗi xảy ra khi tạo nhóm!");
     }
   };
 
@@ -79,10 +148,10 @@ export function ManageUsersPage() {
     user?.role === "teacher"
       ? groups.filter((g) => g.teacherId === user.id)
       : user?.role === "leader"
-      ? groups.filter(
-          (g) => g.leaderId === user.id || g.teacherId === user.createdBy
-        )
-      : groups;
+        ? groups.filter(
+            (g) => g.leaderId === user.id || g.teacherId === user.createdBy
+          )
+        : groups;
 
   // Check if user needs to select a group
   const needsGroup = newUser.role === "leader" || newUser.role === "member";
@@ -97,8 +166,8 @@ export function ManageUsersPage() {
           {user?.role === "admin"
             ? "Quản lý tài khoản giảng viên"
             : user?.role === "teacher"
-            ? "Quản lý nhóm, tài khoản leader và thành viên"
-            : "Quản lý nhóm và tài khoản thành viên"}
+              ? "Quản lý nhóm, tài khoản leader và thành viên"
+              : "Quản lý nhóm và tài khoản thành viên"}
         </p>
       </div>
 
@@ -126,15 +195,25 @@ export function ManageUsersPage() {
           <div className="mb-6 p-4 bg-green-50 rounded-lg">
             <h3 className="font-semibold text-gray-800 mb-4">Tạo nhóm mới</h3>
             <div className="grid grid-cols-2 gap-4">
-              <input
-                type="text"
-                placeholder="Tên nhóm (VD: SE1801)"
-                value={newGroup.name}
-                onChange={(e) =>
-                  setNewGroup({ ...newGroup, name: e.target.value })
-                }
-                className="px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-green-500 focus:border-transparent"
-              />
+              <div>
+                <input
+                  type="text"
+                  placeholder="Tên nhóm (VD: SE1801)"
+                  value={newGroup.name}
+                  onChange={(e) => {
+                    setNewGroup({ ...newGroup, name: e.target.value });
+                    if (groupErrors.name) setGroupErrors({});
+                  }}
+                  className={`px-4 py-2 border rounded-lg focus:ring-2 focus:ring-green-500 focus:border-transparent w-full ${
+                    groupErrors.name ? "border-red-500" : "border-gray-300"
+                  }`}
+                />
+                {groupErrors.name && (
+                  <p className="text-red-600 text-sm mt-1">
+                    {groupErrors.name}
+                  </p>
+                )}
+              </div>
               <input
                 type="text"
                 placeholder="Mô tả (tùy chọn)"
@@ -151,7 +230,10 @@ export function ManageUsersPage() {
               </Button>
               <Button
                 variant="outline"
-                onClick={() => setIsCreatingGroup(false)}
+                onClick={() => {
+                  resetGroupForm();
+                  setIsCreatingGroup(false);
+                }}
               >
                 Hủy
               </Button>
@@ -165,33 +247,64 @@ export function ManageUsersPage() {
               Tạo tài khoản mới
             </h3>
             <div className="grid grid-cols-2 gap-4">
-              <input
-                type="text"
-                placeholder="Họ và tên"
-                value={newUser.name}
-                onChange={(e) =>
-                  setNewUser({ ...newUser, name: e.target.value })
-                }
-                className="px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
-              />
-              <input
-                type="email"
-                placeholder="Email"
-                value={newUser.email}
-                onChange={(e) =>
-                  setNewUser({ ...newUser, email: e.target.value })
-                }
-                className="px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
-              />
-              <input
-                type="password"
-                placeholder="Mật khẩu"
-                value={newUser.password}
-                onChange={(e) =>
-                  setNewUser({ ...newUser, password: e.target.value })
-                }
-                className="px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
-              />
+              <div>
+                <input
+                  type="text"
+                  placeholder="Họ và tên"
+                  value={newUser.name}
+                  onChange={(e) => {
+                    setNewUser({ ...newUser, name: e.target.value });
+                    if (userErrors.name)
+                      setUserErrors({ ...userErrors, name: undefined });
+                  }}
+                  className={`px-4 py-2 border rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent w-full ${
+                    userErrors.name ? "border-red-500" : "border-gray-300"
+                  }`}
+                />
+                {userErrors.name && (
+                  <p className="text-red-600 text-sm mt-1">{userErrors.name}</p>
+                )}
+              </div>
+              <div>
+                <input
+                  type="email"
+                  placeholder="Email"
+                  value={newUser.email}
+                  onChange={(e) => {
+                    setNewUser({ ...newUser, email: e.target.value });
+                    if (userErrors.email)
+                      setUserErrors({ ...userErrors, email: undefined });
+                  }}
+                  className={`px-4 py-2 border rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent w-full ${
+                    userErrors.email ? "border-red-500" : "border-gray-300"
+                  }`}
+                />
+                {userErrors.email && (
+                  <p className="text-red-600 text-sm mt-1">
+                    {userErrors.email}
+                  </p>
+                )}
+              </div>
+              <div>
+                <input
+                  type="password"
+                  placeholder="Mật khẩu"
+                  value={newUser.password}
+                  onChange={(e) => {
+                    setNewUser({ ...newUser, password: e.target.value });
+                    if (userErrors.password)
+                      setUserErrors({ ...userErrors, password: undefined });
+                  }}
+                  className={`px-4 py-2 border rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent w-full ${
+                    userErrors.password ? "border-red-500" : "border-gray-300"
+                  }`}
+                />
+                {userErrors.password && (
+                  <p className="text-red-600 text-sm mt-1">
+                    {userErrors.password}
+                  </p>
+                )}
+              </div>
               <select
                 value={newUser.role}
                 onChange={(e) =>
@@ -211,26 +324,43 @@ export function ManageUsersPage() {
               </select>
 
               {needsGroup && (
-                <select
-                  value={newUser.groupId}
-                  onChange={(e) =>
-                    setNewUser({ ...newUser, groupId: e.target.value })
-                  }
-                  className="px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent col-span-2"
-                >
-                  <option value="">Chọn nhóm</option>
-                  {availableGroups.map((group) => (
-                    <option key={group.id} value={group.id}>
-                      {group.name}{" "}
-                      {group.description ? `- ${group.description}` : ""}
-                    </option>
-                  ))}
-                </select>
+                <div className="col-span-2">
+                  <select
+                    value={newUser.groupId}
+                    onChange={(e) => {
+                      setNewUser({ ...newUser, groupId: e.target.value });
+                      if (userErrors.groupId)
+                        setUserErrors({ ...userErrors, groupId: undefined });
+                    }}
+                    className={`px-4 py-2 border rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent w-full ${
+                      userErrors.groupId ? "border-red-500" : "border-gray-300"
+                    }`}
+                  >
+                    <option value="">Chọn nhóm</option>
+                    {availableGroups.map((group) => (
+                      <option key={group.id} value={group.id}>
+                        {group.name}{" "}
+                        {group.description ? `- ${group.description}` : ""}
+                      </option>
+                    ))}
+                  </select>
+                  {userErrors.groupId && (
+                    <p className="text-red-600 text-sm mt-1">
+                      {userErrors.groupId}
+                    </p>
+                  )}
+                </div>
               )}
             </div>
             <div className="flex gap-2 mt-4">
               <Button onClick={handleCreateUser}>Tạo tài khoản</Button>
-              <Button variant="outline" onClick={() => setIsCreating(false)}>
+              <Button
+                variant="outline"
+                onClick={() => {
+                  resetUserForm();
+                  setIsCreating(false);
+                }}
+              >
                 Hủy
               </Button>
             </div>

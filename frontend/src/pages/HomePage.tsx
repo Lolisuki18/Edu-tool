@@ -1,4 +1,3 @@
-import { useAuth } from "@/contexts/AuthContext";
 import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
 import {
   faUser,
@@ -6,6 +5,7 @@ import {
   faChartBar,
   faUsers,
 } from "@fortawesome/free-solid-svg-icons";
+import { useAuth } from "@/hooks";
 
 export function HomePage() {
   const { user } = useAuth();

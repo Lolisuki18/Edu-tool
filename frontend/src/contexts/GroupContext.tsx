@@ -1,10 +1,4 @@
-import {
-  createContext,
-  useContext,
-  useState,
-  useEffect,
-  type ReactNode,
-} from "react";
+import { createContext, useState, useEffect, type ReactNode } from "react";
 import type { Group, GroupState, CreateGroupData } from "@/types/group.types";
 import { STORAGE_KEYS } from "@/constants";
 
@@ -130,10 +124,4 @@ export function GroupProvider({ children }: { children: ReactNode }) {
   );
 }
 
-export function useGroups() {
-  const context = useContext(GroupContext);
-  if (context === undefined) {
-    throw new Error("useGroups must be used within a GroupProvider");
-  }
-  return context;
-}
+export { GroupContext };

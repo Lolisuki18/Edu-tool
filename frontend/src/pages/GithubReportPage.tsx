@@ -1,5 +1,6 @@
 import { useState } from "react";
 import { Button } from "@/components/common";
+import { showToast, validators } from "@/utils";
 import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
 import { faXmark, faChartLine } from "@fortawesome/free-solid-svg-icons";
 
@@ -9,6 +10,44 @@ export function GithubReportPage() {
   const [dateFrom, setDateFrom] = useState("");
   const [dateTo, setDateTo] = useState("");
   const [isLoading, setIsLoading] = useState(false);
+  const [errors, setErrors] = useState<{
+    repoUrls?: { [key: number]: string };
+    dateFrom?: string;
+    dateTo?: string;
+  }>({});
+
+  const validateForm = (): boolean => {
+    const newErrors: typeof errors = {};
+
+    // Validate repository URLs
+    const repoErrors: { [key: number]: string } = {};
+    repoUrls.forEach((url, index) => {
+      if (url.trim()) {
+        const urlError = validators.githubUrl(url);
+        if (urlError) repoErrors[index] = urlError;
+      }
+    });
+
+    if (Object.keys(repoErrors).length > 0) {
+      newErrors.repoUrls = repoErrors;
+    }
+
+    // Check if at least one repo URL is provided
+    const hasValidRepos = repoUrls.some((url) => url.trim() !== "");
+    if (!hasValidRepos) {
+      newErrors.repoUrls = { 0: "Vui lòng nhập ít nhất một repository URL" };
+    }
+
+    // Validate dates if provided
+    if (dateFrom || dateTo) {
+      const dateErrors = validators.dateRange(dateFrom, dateTo);
+      if (dateErrors.from) newErrors.dateFrom = dateErrors.from;
+      if (dateErrors.to) newErrors.dateTo = dateErrors.to;
+    }
+
+    setErrors(newErrors);
+    return Object.keys(newErrors).length === 0;
+  };
 
   const handleAddRepo = () => {
     setRepoUrls([...repoUrls, ""]);
@@ -24,17 +63,31 @@ export function GithubReportPage() {
     const newUrls = [...repoUrls];
     newUrls[index] = value;
     setRepoUrls(newUrls);
+
+    // Clear error for this field
+    if (errors.repoUrls?.[index]) {
+      const newRepoErrors = { ...errors.repoUrls };
+      delete newRepoErrors[index];
+      setErrors({
+        ...errors,
+        repoUrls:
+          Object.keys(newRepoErrors).length > 0 ? newRepoErrors : undefined,
+      });
+    }
   };
 
   const handleGenerate = async () => {
+    if (!validateForm()) {
+      showToast.error("Vui lòng kiểm tra lại thông tin");
+      return;
+    }
+
     setIsLoading(true);
     setTimeout(() => {
       setIsLoading(false);
-      alert("Report generation will be implemented soon!");
+      showToast.info("Report generation will be implemented soon!");
     }, 1000);
   };
-
-  const hasValidRepos = repoUrls.some((url) => url.trim() !== "");
 
   return (
     <div className="max-w-4xl mx-auto">
@@ -59,22 +112,33 @@ export function GithubReportPage() {
             </label>
             <div className="space-y-3">
               {repoUrls.map((url, index) => (
-                <div key={index} className="flex gap-2">
-                  <input
-                    type="text"
-                    value={url}
-                    onChange={(e) => handleRepoChange(index, e.target.value)}
-                    placeholder="https://github.com/username/repository"
-                    className="flex-1 px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
-                  />
-                  {repoUrls.length > 1 && (
-                    <button
-                      onClick={() => handleRemoveRepo(index)}
-                      className="px-3 py-2 bg-red-100 text-red-600 rounded-lg hover:bg-red-200 transition-colors flex items-center justify-center"
-                      type="button"
-                    >
-                      <FontAwesomeIcon icon={faXmark} />
-                    </button>
+                <div key={index}>
+                  <div className="flex gap-2">
+                    <input
+                      type="text"
+                      value={url}
+                      onChange={(e) => handleRepoChange(index, e.target.value)}
+                      placeholder="https://github.com/username/repository"
+                      className={`flex-1 px-4 py-2 border rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent ${
+                        errors.repoUrls?.[index]
+                          ? "border-red-500"
+                          : "border-gray-300"
+                      }`}
+                    />
+                    {repoUrls.length > 1 && (
+                      <button
+                        onClick={() => handleRemoveRepo(index)}
+                        className="px-3 py-2 bg-red-100 text-red-600 rounded-lg hover:bg-red-200 transition-colors flex items-center justify-center"
+                        type="button"
+                      >
+                        <FontAwesomeIcon icon={faXmark} />
+                      </button>
+                    )}
+                  </div>
+                  {errors.repoUrls?.[index] && (
+                    <p className="text-red-600 text-sm mt-1">
+                      {errors.repoUrls[index]}
+                    </p>
                   )}
                 </div>
               ))}
@@ -112,9 +176,18 @@ export function GithubReportPage() {
               <input
                 type="date"
                 value={dateFrom}
-                onChange={(e) => setDateFrom(e.target.value)}
-                className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                onChange={(e) => {
+                  setDateFrom(e.target.value);
+                  if (errors.dateFrom)
+                    setErrors({ ...errors, dateFrom: undefined });
+                }}
+                className={`w-full px-4 py-2 border rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent ${
+                  errors.dateFrom ? "border-red-500" : "border-gray-300"
+                }`}
               />
+              {errors.dateFrom && (
+                <p className="text-red-600 text-sm mt-1">{errors.dateFrom}</p>
+              )}
             </div>
             <div>
               <label className="block text-sm font-medium text-gray-700 mb-2">
@@ -123,15 +196,24 @@ export function GithubReportPage() {
               <input
                 type="date"
                 value={dateTo}
-                onChange={(e) => setDateTo(e.target.value)}
-                className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                onChange={(e) => {
+                  setDateTo(e.target.value);
+                  if (errors.dateTo)
+                    setErrors({ ...errors, dateTo: undefined });
+                }}
+                className={`w-full px-4 py-2 border rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent ${
+                  errors.dateTo ? "border-red-500" : "border-gray-300"
+                }`}
               />
+              {errors.dateTo && (
+                <p className="text-red-600 text-sm mt-1">{errors.dateTo}</p>
+              )}
             </div>
           </div>
 
           <Button
             onClick={handleGenerate}
-            disabled={!hasValidRepos || isLoading}
+            disabled={isLoading}
             className="w-full"
           >
             {isLoading ? "Đang tạo báo cáo..." : "Tạo báo cáo đóng góp"}
