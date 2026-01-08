@@ -1,17 +1,25 @@
 import { useState } from "react";
 import { useAuth } from "@/contexts/AuthContext";
+import { useGroups } from "@/contexts/GroupContext";
 import { Button } from "@/components/common";
 import type { User, UserRole } from "@/types";
 
 export function ManageUsersPage() {
   const { user } = useAuth();
+  const { groups, createGroup, isLoading: groupsLoading } = useGroups();
   const [users, setUsers] = useState<User[]>([]);
   const [isCreating, setIsCreating] = useState(false);
+  const [isCreatingGroup, setIsCreatingGroup] = useState(false);
   const [newUser, setNewUser] = useState({
     name: "",
     email: "",
     password: "",
     role: "member" as UserRole,
+    groupId: "",
+  });
+  const [newGroup, setNewGroup] = useState({
+    name: "",
+    description: "",
   });
 
   // Helper function to check if current user can create a specific role
@@ -30,15 +38,54 @@ export function ManageUsersPage() {
     const mockUser: User = {
       id: `user-${Date.now()}`,
       ...newUser,
+      groupId: newUser.groupId || undefined,
       createdBy: user?.id,
       createdAt: new Date().toISOString(),
       updatedAt: new Date().toISOString(),
     };
     setUsers([...users, mockUser]);
-    setNewUser({ name: "", email: "", password: "", role: "member" });
+    setNewUser({
+      name: "",
+      email: "",
+      password: "",
+      role: "member",
+      groupId: "",
+    });
     setIsCreating(false);
     alert("Tạo tài khoản thành công!");
   };
+
+  const handleCreateGroup = async () => {
+    if (!newGroup.name || !user) return;
+
+    try {
+      await createGroup({
+        name: newGroup.name,
+        description: newGroup.description,
+        teacherId: user.role === "teacher" ? user.id : user.createdBy || "",
+        createdBy: user.id,
+        createdByRole: user.role === "teacher" ? "teacher" : "leader",
+      });
+      setNewGroup({ name: "", description: "" });
+      setIsCreatingGroup(false);
+      alert("Tạo nhóm thành công!");
+    } catch (error) {
+      alert("Có lỗi xảy ra khi tạo nhóm!");
+    }
+  };
+
+  // Get groups for current teacher or leader
+  const availableGroups =
+    user?.role === "teacher"
+      ? groups.filter((g) => g.teacherId === user.id)
+      : user?.role === "leader"
+      ? groups.filter(
+          (g) => g.leaderId === user.id || g.teacherId === user.createdBy
+        )
+      : groups;
+
+  // Check if user needs to select a group
+  const needsGroup = newUser.role === "leader" || newUser.role === "member";
 
   return (
     <div className="max-w-6xl mx-auto">
@@ -49,7 +96,9 @@ export function ManageUsersPage() {
         <p className="text-gray-600">
           {user?.role === "admin"
             ? "Quản lý tài khoản giảng viên"
-            : "Quản lý tài khoản leader và thành viên"}
+            : user?.role === "teacher"
+            ? "Quản lý nhóm, tài khoản leader và thành viên"
+            : "Quản lý nhóm và tài khoản thành viên"}
         </p>
       </div>
 
@@ -58,10 +107,57 @@ export function ManageUsersPage() {
           <h2 className="text-xl font-semibold text-gray-800">
             Danh sách người dùng
           </h2>
-          <Button onClick={() => setIsCreating(true)}>
-            + Tạo tài khoản mới
-          </Button>
+          <div className="flex gap-2">
+            {(user?.role === "teacher" || user?.role === "leader") && (
+              <Button
+                variant="outline"
+                onClick={() => setIsCreatingGroup(true)}
+              >
+                + Tạo nhóm mới
+              </Button>
+            )}
+            <Button onClick={() => setIsCreating(true)}>
+              + Tạo tài khoản mới
+            </Button>
+          </div>
         </div>
+
+        {isCreatingGroup && (
+          <div className="mb-6 p-4 bg-green-50 rounded-lg">
+            <h3 className="font-semibold text-gray-800 mb-4">Tạo nhóm mới</h3>
+            <div className="grid grid-cols-2 gap-4">
+              <input
+                type="text"
+                placeholder="Tên nhóm (VD: SE1801)"
+                value={newGroup.name}
+                onChange={(e) =>
+                  setNewGroup({ ...newGroup, name: e.target.value })
+                }
+                className="px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-green-500 focus:border-transparent"
+              />
+              <input
+                type="text"
+                placeholder="Mô tả (tùy chọn)"
+                value={newGroup.description}
+                onChange={(e) =>
+                  setNewGroup({ ...newGroup, description: e.target.value })
+                }
+                className="px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-green-500 focus:border-transparent"
+              />
+            </div>
+            <div className="flex gap-2 mt-4">
+              <Button onClick={handleCreateGroup} disabled={groupsLoading}>
+                Tạo nhóm
+              </Button>
+              <Button
+                variant="outline"
+                onClick={() => setIsCreatingGroup(false)}
+              >
+                Hủy
+              </Button>
+            </div>
+          </div>
+        )}
 
         {isCreating && (
           <div className="mb-6 p-4 bg-blue-50 rounded-lg">
@@ -113,6 +209,24 @@ export function ManageUsersPage() {
                   </>
                 )}
               </select>
+
+              {needsGroup && (
+                <select
+                  value={newUser.groupId}
+                  onChange={(e) =>
+                    setNewUser({ ...newUser, groupId: e.target.value })
+                  }
+                  className="px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent col-span-2"
+                >
+                  <option value="">Chọn nhóm</option>
+                  {availableGroups.map((group) => (
+                    <option key={group.id} value={group.id}>
+                      {group.name}{" "}
+                      {group.description ? `- ${group.description}` : ""}
+                    </option>
+                  ))}
+                </select>
+              )}
             </div>
             <div className="flex gap-2 mt-4">
               <Button onClick={handleCreateUser}>Tạo tài khoản</Button>

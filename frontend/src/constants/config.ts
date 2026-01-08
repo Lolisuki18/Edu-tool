@@ -6,6 +6,7 @@ export const STORAGE_KEYS = {
   REFRESH_TOKEN: 'refresh_token',
   USER: 'user',
   THEME: 'theme',
+  GROUPS: 'groups_data',
 } as const
 
 export const PAGE_SIZE = 10
